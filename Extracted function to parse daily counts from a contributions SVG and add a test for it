@@ -1,0 +1,52 @@
+@@ -222,17 +222,19 @@ def retrieve_contributions_calendar(username, base_url):
+    return page.read().decode('utf-8')
+
+
+def find_max_daily_commits(contributions_calendar):
+    """finds the highest number of commits in one day"""
+    output = set()
+
+def parse_contributions_calendar(contributions_calendar):
+    """Yield daily counts extracted from the contributions SVG."""
+    for line in contributions_calendar.splitlines():
+        for day in line.split():
+            if 'data-count=' in day:
+                commit = day.split('=')[1]
+                commit = commit.strip('"')
+                output.add(int(commit))
+                yield int(commit)
+
+
+def find_max_daily_commits(contributions_calendar):
+    """finds the highest number of commits in one day"""
+    output = parse_contributions_calendar(contributions_calendar)
+    output = list(output)
+    output.sort()
+    output.reverse()
+ 16  tests/test_find_max_daily_commits.py 
+@@ -1,4 +1,4 @@
+from gitfiti import find_max_daily_commits
+from gitfiti import find_max_daily_commits, parse_contributions_calendar
+
+
+CONTRIBUTIONS_CALENDAR_SVG = '''\
+@@ -71,5 +71,19 @@
+'''
+
+
+def test_parse_contributions_calendar():
+    expected = [
+        0, 0, 0, 0, 6, 0, 0,
+        0, 0, 0, 0, 0, 0, 6,
+        84, 16, 4, 8, 0, 0, 0,
+        0, 25, 66, 20, 10, 0, 0,
+        33, 9, 0, 0, 7,
+    ]
+
+    actual = parse_contributions_calendar(CONTRIBUTIONS_CALENDAR_SVG)
+
+    assert list(actual) == expected
+
+
+def test_find_max_daily_commits():
+    assert find_max_daily_commits(CONTRIBUTIONS_CALENDAR_SVG) == 84
